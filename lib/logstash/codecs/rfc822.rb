@@ -5,7 +5,7 @@ require "stud/interval"
 require "socket" # for Socket.gethostname
 
 
-class LogStash::Filters::RFC822 < LogStash::Filters::Base
+class LogStash::Codecs::RFC822 < LogStash::Codecs::Base
   config_name "rfc822"
   
   config :lowercase_headers, :validate => :boolean, :default => true
@@ -15,8 +15,6 @@ class LogStash::Filters::RFC822 < LogStash::Filters::Base
   # content-type as the event message.
   config :content_type, :validate => :string, :default => "text/plain"
 
-  config :source, :validate => :string, :default => "source"
-
   public
   def register
     require "mail"
@@ -25,8 +23,8 @@ class LogStash::Filters::RFC822 < LogStash::Filters::Base
   end
 
   public
-  def filter(event)
-    mail = Mail.read_from_string(event.get(@source))
+  def decode(payload, &block)
+    mail = Mail.read_from_string(payload)
     
     if @strip_attachments
       mail = mail.without_attachments
@@ -41,7 +39,7 @@ class LogStash::Filters::RFC822 < LogStash::Filters::Base
       message = part.decoded
     end
 
-    event.set("message", message)
+    event = LogStash::Event.new("raw" => payload, "message" => message)
 
     # Use the 'Date' field as the timestamp
     event.timestamp = LogStash::Timestamp.new(mail.date.to_time)
@@ -72,8 +70,9 @@ class LogStash::Filters::RFC822 < LogStash::Filters::Base
       end
     end
 
-    filter_matched(event)
+    yield event
   end
+
   # transcode_to_utf8 is meant for headers transcoding.
   # the mail gem will set the correct encoding on header strings decoding
   # and we want to transcode it to utf8

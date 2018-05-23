@@ -1,12 +1,12 @@
 
 # encoding: utf-8
 require "logstash/devutils/rspec/spec_helper"
-require "logstash/filters/rfc822"
+require "logstash/codecs/rfc822"
 require "mail"
 require "net/imap"
 
 
-describe LogStash::Filters::RFC822 do
+describe LogStash::Codecs::RFC822 do
   msg_time = Time.new
   msg_text = "foo\nbar\nbaz"
   msg_html = "<p>a paragraph</p>\n\n"
@@ -27,12 +27,11 @@ describe LogStash::Filters::RFC822 do
       it "should select text/plain part" do
         config = {}
 
-        input = LogStash::Filters::RFC822.new config
+        input = LogStash::Codecs::RFC822.new config
         input.register
-
-        event = LogStash::Event.new("status" => 200, "source"=>subject.to_s)
-        input.filter(event)
-        insist { event.get("message") } == msg_text
+        input.decode(subject.to_s) do |event|
+          insist { event.get("message") } == msg_text
+        end
       end
     end
 
@@ -40,12 +39,11 @@ describe LogStash::Filters::RFC822 do
       it "should select text/html part" do
         config = {"content_type" => "text/html"}
 
-        input = LogStash::Filters::RFC822.new config
+        input = LogStash::Codecs::RFC822.new config
         input.register
-        
-        event = LogStash::Event.new("status" => 200, "source"=>subject.to_s)
-        input.filter(event)
-        insist { event.get("message") } == msg_html
+        input.decode(subject.to_s) do |event|
+          insist { event.get("message") } == msg_html
+        end
       end
     end
   end
@@ -55,12 +53,11 @@ describe LogStash::Filters::RFC822 do
       subject.subject = "=?iso-8859-1?Q?foo_:_bar?="
       config = {}
 
-      input = LogStash::Filters::RFC822.new config
+      input = LogStash::Codecs::RFC822.new config
       input.register
-      
-      event = LogStash::Event.new("status" => 200, "source"=>subject.to_s)
-      input.filter(event)
-      insist { event.get("subject") } == "foo : bar"
+      input.decode(subject.to_s) do |event|
+        insist { event.get("subject") } == "foo : bar"
+      end
     end
   end
 
@@ -71,12 +68,11 @@ describe LogStash::Filters::RFC822 do
 
       config = {}
 
-      input = LogStash::Filters::RFC822.new config
+      input = LogStash::Codecs::RFC822.new config
       input.register
-      
-      event = LogStash::Event.new("status" => 200, "source"=>subject.to_s)
-      input.filter(event)
-      insist { event.get("received") } == ["test1", "test2"]
+      input.decode(subject.to_s) do |event|
+        insist { event.get("received") } == ["test1", "test2"]
+      end
     end
 
     it "should add more than 2 values as array in event" do
@@ -86,12 +82,11 @@ describe LogStash::Filters::RFC822 do
 
       config = {}
 
-      input = LogStash::Filters::RFC822.new config
+      input = LogStash::Codecs::RFC822.new config
       input.register
-      
-      event = LogStash::Event.new("status" => 200, "source"=>subject.to_s)
-      input.filter(event)
-      insist { event.get("received") } == ["test1", "test2", "test3"]
+      input.decode(subject.to_s) do |event|
+        insist { event.get("received") } == ["test1", "test2", "test3"]
+      end
     end
   end
 
@@ -100,12 +95,11 @@ describe LogStash::Filters::RFC822 do
       subject.header['X-Custom-Header'] = nil
       config = {}
 
-      input = LogStash::Filters::RFC822.new config
+      input = LogStash::Codecs::RFC822.new config
       input.register
-      
-      event = LogStash::Event.new("status" => 200, "source"=>subject.to_s)
-      input.filter(event)
-      insist { event.get("message") } == msg_text
+      input.decode(subject.to_s) do |event|
+        insist { event.get("message") } == msg_text
+      end
     end
   end
 end
