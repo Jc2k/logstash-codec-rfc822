@@ -30,16 +30,7 @@ class LogStash::Codecs::RFC822 < LogStash::Codecs::Base
       mail = mail.without_attachments
     end
 
-    if mail.parts.count == 0
-      # No multipart message, just use the body as the event text
-      message = mail.body.decoded
-    else
-      # Multipart message; use the first text/plain part we find
-      part = mail.parts.find { |p| p.content_type.match @content_type_re } || mail.parts.first
-      message = part.decoded
-    end
-
-    event = LogStash::Event.new("raw" => payload, "message" => message)
+    event = LogStash::Event.new("raw" => payload, "parts" => mail.parts.count)
 
     # Use the 'Date' field as the timestamp
     event.timestamp = LogStash::Timestamp.new(mail.date.to_time)
@@ -53,9 +44,6 @@ class LogStash::Codecs::RFC822 < LogStash::Codecs::Base
       #   https://github.com/mikel/mail/blob/master/README.md#encodings
       #   http://tools.ietf.org/html/rfc2047#section-2
       value = transcode_to_utf8(header.decoded.to_s)
-
-      # Assume we already processed the 'date' above.
-      next if name == "Date"
 
       case (field = event.get(name))
       when String

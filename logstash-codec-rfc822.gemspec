@@ -2,7 +2,7 @@ Gem::Specification.new do |s|
 
   s.name            = 'logstash-codec-rfc822'
   s.version         = '0.0.1'
-  s.licenses        = ['Apache License (2.0)']
+  s.licenses        = ['Apache-2.0']
   s.summary         = "Parses email messages into fields"
   s.description     = "This gem is a Logstash plugin required to be installed on top of the Logstash core pipeline using $LS_HOME/bin/logstash-plugin install gemname. This gem is not a stand-alone program"
   s.authors         = ["John Carr"]
@@ -21,8 +21,8 @@ Gem::Specification.new do |s|
 
   # Gem dependencies
   s.add_runtime_dependency "logstash-core-plugin-api", ">= 1.60", "<= 2.99"
-  s.add_runtime_dependency "logstash-core", ">= 5.6.0"
-  s.add_runtime_dependency 'mail', '~> 2.6.3'
+  s.add_runtime_dependency "logstash-core", ">= 5.5.2"
+  s.add_runtime_dependency 'mail', '~> 2.6'
   s.add_runtime_dependency 'stud', '~> 0.0.22'
 
   s.add_development_dependency 'logstash-devutils', '= 1.3.6'
